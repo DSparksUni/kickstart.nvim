@@ -158,6 +158,12 @@ vim.opt.cursorline = true
 vim.opt.scrolloff = 10
 
 -- <<<< THIS SETTING IS ADDED BY ME >>>>
+-- Make tabs work just like 4 spaces
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.expandtab = true
+
+-- <<<< THIS SETTING IS ADDED BY ME >>>>
 -- Map Ctrl-Backspace in insert mode
 vim.keymap.set('i', '<C-h>', '<C-w>', { noremap = true, silent = true })
 
@@ -941,7 +947,7 @@ require('lazy').setup({
   -- require 'kickstart.plugins.indent_line',
   -- require 'kickstart.plugins.lint',
   -- require 'kickstart.plugins.autopairs',
-  -- require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.neo-tree',
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
@@ -1397,7 +1403,7 @@ require('lazy').setup({
         --    https://github.com/pmizio/typescript-tools.nvim
         --
         -- But for many setups, the LSP (`tsserver`) will work just fine
-        -- tsserver = {},
+        tsserver = {},
         --
 
         lua_ls = {
