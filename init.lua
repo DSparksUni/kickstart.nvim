@@ -845,6 +845,11 @@ require('lazy').setup({
     priority = 1001,
   },
 
+  {
+    'rebelot/kanagawa.nvim',
+    priority = 1100,
+  },
+
   { -- You can easily change to a different colorscheme.
     -- Change the name of the colorscheme plugin below, and then
     -- change the command in the config to whatever the name of that colorscheme is.
@@ -1609,6 +1614,11 @@ require('lazy').setup({
   {
     'scottmckendry/cyberdream.nvim',
     priority = 1001,
+  },
+  {
+    'yorik1984/newpaper.nvim',
+    priority = 1000,
+    config = true,
   },
 
   { -- You can easily change to a different colorscheme.
