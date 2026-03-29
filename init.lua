@@ -179,6 +179,10 @@ vim.keymap.set('n', '<leader>b', '<C-^>')
 -- Override the netrw listing keybind to work with telescope-file-browser
 vim.keymap.set('n', '<leader>e', ':Telescope file_browser<CR>')
 
+-- <<<< THIS SETTINGS IS ADDED BY ME >>>>
+-- Disable Logging
+vim.lsp.set_log_level 'OFF'
+
 -- <<<< THIS SETTING IS ADDED BY ME >>>>
 -- Set a keybind to create a new file in the directory explorer
 function CreateNewFile()
