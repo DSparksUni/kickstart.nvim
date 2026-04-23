@@ -680,7 +680,6 @@ require('lazy').setup({
         --    https://github.com/pmizio/typescript-tools.nvim
         --
         -- But for many setups, the LSP (`tsserver`) will work just fine
-        tsserver = {},
         --
 
         lua_ls = {
@@ -892,6 +891,12 @@ require('lazy').setup({
     'rebelot/kanagawa.nvim',
     priority = 1100,
   },
+
+  {
+    'henry-hsieh/riscv-asm-vim',
+    ft = { 'riscv_asm' },
+  },
+
   {
     'zenbones-theme/zenbones.nvim',
     -- Optionally install Lush. Allows for more configuration or extending the colorscheme
