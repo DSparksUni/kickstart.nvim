@@ -373,6 +373,17 @@ require('lazy').setup({
     dependencies = { 'nvim-lua/plenary.nvim' },
   },
 
+  {
+    'mfussenegger/nvim-jdtls',
+    ft = { 'java' },
+  },
+
+  {
+    'akinsho/toggleterm.nvim',
+    version = '*',
+    config = true,
+  },
+
   { -- Fuzzy Finder (files, lsp, etc)
     'nvim-telescope/telescope.nvim',
     event = 'VimEnter',
