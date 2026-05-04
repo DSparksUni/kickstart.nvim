@@ -1,7 +1,7 @@
 local toggleterm = require 'toggleterm'
 
 toggleterm.setup {
-  shell = 'powershell',
+  shell = vim.fn.has 'win32' == 1 and 'powershell' or vim.o.shell,
   direction = 'float',
   shade_terminals = true,
   start_in_insert = true,
