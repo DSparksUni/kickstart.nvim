@@ -168,64 +168,12 @@ vim.opt.expandtab = true
 vim.keymap.set('i', '<C-h>', '<C-w>', { noremap = true, silent = true })
 
 -- <<<< THIS SETTING IS ADDED BY ME >>>>
--- Set a keybind for opening the directory listing
-vim.api.nvim_set_keymap('n', '<leader>e', ':Ex<CR>', { noremap = true, silent = true })
-
--- <<<< THIS SETTING IS ADDED BY ME >>>>
 -- Change the keybind for going back to the previous buffer
 vim.keymap.set('n', '<leader>b', '<C-^>')
 
 -- <<<< THIS SETTINGS IS ADDED BY ME >>>>
--- Override the netrw listing keybind to work with telescope-file-browser
-vim.keymap.set('n', '<leader>e', ':Telescope file_browser<CR>')
-
--- <<<< THIS SETTINGS IS ADDED BY ME >>>>
 -- Disable Logging
 vim.lsp.set_log_level 'OFF'
-
--- <<<< THIS SETTING IS ADDED BY ME >>>>
--- Set a keybind to create a new file in the directory explorer
-function CreateNewFile()
-  local current_dir = vim.fn.expand '%:p:h'
-  local filename = vim.fn.input('New File: ', current_dir .. '/')
-  vim.cmd('e ' .. filename)
-end
-vim.api.nvim_set_keymap('n', '<leader>nf', '', { noremap = true, silent = true })
-
--- <<<< THIS SETTING IS ADDED BY ME >>>>
--- Set a keybind to delete a file in the directory explorer
-function DeleteFile()
-  local current_dir = vim.fn.expand '%:p:h'
-  local filename = vim.fn.input('Delete file: ', current_dir .. '/')
-  if filename ~= '' and vim.fn.confirm('Are you sure you want to delete ' .. filename .. '?', '&Yes\n&No') == 1 then
-    local result = vim.fn.delete(filename)
-    if result == 0 then
-      print 'File deleted successfully'
-    else
-      print 'Error deleting file'
-    end
-    vim.cmd('edit ' .. current_dir)
-  end
-end
-vim.api.nvim_set_keymap('n', '<leader>df', ':lua DeleteFile()<CR>', { noremap = true, silent = true })
-
--- <<<< THIS SETTING IS ADDED BY ME >>>>
--- Set a keybind to rename a file in the directory explorer
-function RenameFile()
-  local current_dir = vim.fn.expand '%:p:h'
-  local old_filename = vim.fn.input('Old file name: ', current_dir .. '/')
-  local new_filename = vim.fn.input('New file name: ', current_dir .. '/')
-  if old_filename ~= '' and new_filename ~= '' then
-    local result = vim.fn.rename(old_filename, new_filename)
-    if result == 0 then
-      print 'File renamed successfully'
-    else
-      print 'Error renaming file'
-    end
-    vim.cmd('edit ' .. current_dir)
-  end
-end
-vim.api.nvim_set_keymap('n', '<leader>rf', ':lua RenameFile()<CR>', { noremap = true, silent = true })
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
@@ -244,6 +192,18 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 -- NOTE: This won't work in all terminal emulators/tmux/etc. Try your own mapping
 -- or just use <C-\><C-n> to exit terminal mode
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
+
+vim.diagnostic.config {
+  virtual_text = true,
+  float = {
+    focusable = false,
+    style = 'minimal',
+    border = 'rounded',
+    source = true,
+    header = '',
+    prefix = '',
+  },
+}
 
 -- TIP: Disable arrow keys in normal mode
 -- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
@@ -351,7 +311,7 @@ require('lazy').setup({
       require('which-key').add {
         { '<leader>c', group = '[C]ode' },
         { '<leader>d', group = '[D]ocument' },
-        { '<leader>r', group = '[R]ename' },
+        { '<leadercr', group = '[R]ename' },
         { '<leader>s', group = '[S]earch' },
         { '<leader>w', group = '[W]orkspace' },
         { '<leader>t', group = '[T]oggle' },
@@ -387,7 +347,7 @@ require('lazy').setup({
   { -- Fuzzy Finder (files, lsp, etc)
     'nvim-telescope/telescope.nvim',
     event = 'VimEnter',
-    branch = '0.1.x',
+    -- NOTE: branch pin removed — it caused ft_to_lang API mismatch with newer treesitter
     dependencies = {
       'nvim-lua/plenary.nvim',
       { -- If encountering errors, see telescope-fzf-native README for installation instructions
@@ -395,12 +355,13 @@ require('lazy').setup({
 
         -- `build` is used to run some command when the plugin is installed/updated.
         -- This is only run then, not every time Neovim starts up.
-        build = 'make',
+        -- NOTE: switched from make to cmake for Windows compatibility
+        build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release',
 
         -- `cond` is a condition used to determine whether this plugin should be
         -- installed and loaded.
         cond = function()
-          return vim.fn.executable 'make' == 1
+          return vim.fn.executable 'cmake' == 1
         end,
       },
       { 'nvim-telescope/telescope-ui-select.nvim' },
@@ -430,7 +391,7 @@ require('lazy').setup({
 
       -- [[ Configure Telescope ]]
       -- See `:help telescope` and `:help telescope.setup()`
-      local fb_actions = require('telescope').extensions.file_browser.actions
+      -- NOTE: fb_actions require moved to telescope-file-browser config block below
       require('telescope').setup {
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
@@ -444,14 +405,6 @@ require('lazy').setup({
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
-          },
-          file_browser = {
-            hijack_netrw = true,
-
-            ['i'] = {
-              ['C-h'] = fb_actions.create,
-              ['<leader>rf'] = fb_actions.rename,
-            },
           },
         },
       }
@@ -499,8 +452,27 @@ require('lazy').setup({
   },
 
   {
+    -- NOTE: file_browser now has its own config block so that fb_actions is only
+    -- required after the extension is guaranteed to be loaded
     'nvim-telescope/telescope-file-browser.nvim',
     dependencies = { 'nvim-telescope/telescope.nvim', 'nvim-lua/plenary.nvim' },
+    config = function()
+      local fb_actions = require('telescope').extensions.file_browser.actions
+      require('telescope').setup {
+        extensions = {
+          file_browser = {
+            hijack_netrw = true,
+            mappings = {
+              ['i'] = {
+                ['<C-h>'] = fb_actions.create,
+                ['<leader>rf'] = fb_actions.rename,
+              },
+            },
+          },
+        },
+      }
+      require('telescope').load_extension 'file_browser'
+    end,
   },
 
   -- LSP Plugins
@@ -670,7 +642,15 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        clangd = {},
+        clangd = {
+          settings = {
+            clangd = {
+              diagnostics = {
+                suppress = { 'unused-includes' },
+              },
+            },
+          },
+        },
         -- gopls = {},
         pyright = {},
         -- rust_analyzer = {},
@@ -737,7 +717,7 @@ require('lazy').setup({
       {
         '<leader>f',
         function()
-          require('conform').format { async = true, lsp_fallback = true }
+          require('conform').format { async = true, lsp_format = 'fallback' }
         end,
         mode = '',
         desc = '[F]ormat buffer',
@@ -752,7 +732,7 @@ require('lazy').setup({
         local disable_filetypes = { c = true, cpp = true }
         return {
           timeout_ms = 500,
-          lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
+          lsp_format = not disable_filetypes[vim.bo[bufnr].filetype] and 'fallback' or 'never',
         }
       end,
       formatters_by_ft = {
@@ -893,11 +873,6 @@ require('lazy').setup({
   },
 
   {
-    'henry-hsieh/riscv-asm-vim',
-    ft = { 'riscv_asm' },
-  },
-
-  {
     'zenbones-theme/zenbones.nvim',
     -- Optionally install Lush. Allows for more configuration or extending the colorscheme
     -- If you don't want to install lush, make sure to set g:zenbones_compat = 1
@@ -980,33 +955,8 @@ require('lazy').setup({
   },
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
+    lazy = false,
     build = ':TSUpdate',
-    opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
-      -- Autoinstall languages that are not installed
-      auto_install = true,
-      highlight = {
-        enable = true,
-        -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
-        --  If you are experiencing weird indenting issues, add the language to
-        --  the list of additional_vim_regex_highlighting and disabled languages for indent.
-        additional_vim_regex_highlighting = { 'ruby' },
-      },
-      indent = { enable = true, disable = { 'ruby' } },
-    },
-    config = function(_, opts)
-      -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
-
-      ---@diagnostic disable-next-line: missing-fields
-      require('nvim-treesitter.configs').setup(opts)
-
-      -- There are additional nvim-treesitter modules that you can use to interact
-      -- with nvim-treesitter. You should go explore a few and see what interests you:
-      --
-      --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
-      --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
-      --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
-    end,
   },
 
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
@@ -1023,7 +973,7 @@ require('lazy').setup({
   -- require 'kickstart.plugins.lint',
   -- require 'kickstart.plugins.autopairs',
   require 'kickstart.plugins.neo-tree',
-  -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+  require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
@@ -1053,6 +1003,5 @@ require('lazy').setup({
   },
 })
 
-require('telescope').load_extension 'file_browser'
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
